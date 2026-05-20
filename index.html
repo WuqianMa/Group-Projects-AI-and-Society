@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hong Kong Airbnb — Geography of Preference</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-row">
+      <h1>Hong Kong Airbnb — Geography of Preference</h1>
+      <div class="header-actions">
+        <button id="reset-view" class="btn">Reset view</button>
+        <button id="download-all" class="btn primary">Download all</button>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <span class="control-label">Compare by</span>
+        <label><input type="radio" name="compareBy" value="language" checked> Language</label>
+        <label><input type="radio" name="compareBy" value="stay"> Stay length</label>
+        <label><input type="radio" name="compareBy" value="group"> Group size</label>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Segment</span>
+        <span id="segment-chips" class="chips"></span>
+      </div>
+      <div class="control-group" hidden>
+        <span class="control-label">Colour</span>
+        <label><input type="radio" name="colorScale" value="linear"> Linear</label>
+        <label><input type="radio" name="colorScale" value="log" checked> Log</label>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Map style</span>
+        <label><input type="radio" name="mapStyle" value="choropleth" checked> District choropleth</label>
+        <label><input type="radio" name="mapStyle" value="heatmap"> Listing hotspots</label>
+      </div>
+    </div>
+
+    <nav class="breadcrumb" id="breadcrumb"></nav>
+  </header>
+
+  <main class="dashboard">
+
+    <section class="row row-map-context">
+      <div class="panel panel-map" id="panel-map">
+        <header class="panel-head">
+          <h2>Density map · reviews / km²</h2>
+          <button class="dl" data-target="panel-map" title="Download PNG">⇩</button>
+        </header>
+        <div class="panel-body">
+          <div id="map"></div>
+          <div class="legend" id="map-legend"></div>
+        </div>
+      </div>
+
+      <div class="panel panel-context" id="panel-context">
+        <header class="panel-head">
+          <h2>Selected area</h2>
+          <button class="dl" data-target="panel-context" title="Download PNG">⇩</button>
+        </header>
+        <div class="panel-body" id="context-body">
+          <div class="scope-card" id="scope-card"></div>
+          <div class="pies">
+            <div class="mini" id="pie-pop"></div>
+            <div class="mini" id="pie-lang"></div>
+            <div class="mini" id="pie-room"></div>
+          </div>
+          <div class="quotes" id="quotes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="row row-two">
+      <div class="panel" id="panel-popdensity">
+        <header class="panel-head">
+          <h2>Population vs review density</h2>
+          <button class="dl" data-target="panel-popdensity" title="Download PNG">⇩</button>
+        </header>
+        <div class="panel-body"><div class="chart" id="chart-popdensity"></div></div>
+      </div>
+
+      <div class="panel" id="panel-roomtype">
+        <header class="panel-head">
+          <h2>Room-type composition by district</h2>
+          <button class="dl" data-target="panel-roomtype" title="Download PNG">⇩</button>
+        </header>
+        <div class="panel-body"><div class="chart" id="chart-roomtype"></div></div>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="panel" id="panel-topics">
+        <header class="panel-head">
+          <h2>Topics &amp; word clouds by segment</h2>
+          <button class="dl" data-target="panel-topics" title="Download PNG">⇩</button>
+        </header>
+        <div class="panel-body"><div class="topics-grid" id="topics-grid"></div></div>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="panel" id="panel-mix">
+        <header class="panel-head">
+          <h2>Who books what, where · room-type by segment, split into three regions</h2>
+          <button class="dl" data-target="panel-mix" title="Download PNG">⇩</button>
+        </header>
+        <div class="panel-body">
+          <p class="panel-note">
+            For each region, the three bars show the segments of the current compare axis.
+            Each bar is split into <b>Entire home/apt</b> (blue) and <b>Private room</b> (magenta), so
+            you can see at a glance which segment in which region tilts toward which room type.
+          </p>
+          <div class="chart" id="chart-mix"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Data: InsideAirbnb Hong Kong snapshot, 2025-09-23. Density = reviews per km².
+         Population: HK Census &amp; Statistics Department, 2021 Population Census.
+         Map tiles © OpenStreetMap contributors, © CARTO.</p>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-image@0.4.0/leaflet-image.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script src="js/store.js"></script>
+  <script src="js/data-loader.js"></script>
+  <script src="js/download.js"></script>
+  <script src="js/panel-map.js"></script>
+  <script src="js/panel-context.js"></script>
+  <script src="js/panel-popdensity.js"></script>
+  <script src="js/panel-roomtype.js"></script>
+  <script src="js/panel-topics.js"></script>
+  <script src="js/panel-mix.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
